@@ -47,6 +47,7 @@ class DGITrainer(Trainer):
             self.model.cuda()
             self.criterion.cuda()
         self.optimizer = torch_utils.get_optimizer(opt['optim'], self.model.parameters(), opt['lr'])
+        self.rankingLoss = nn.MarginRankingLoss(margin=opt["margin"])
         self.epoch_rec_loss = []
         self.epoch_dgi_loss = []
 
@@ -176,7 +177,7 @@ class DGITrainer(Trainer):
             pre = torch.cat((pos_One, neg_One))
             reconstruct_loss = self.criterion(pre, Label)
         else:
-            reconstruct_loss = self.HingeLoss(pos_One, neg_One)
+            reconstruct_loss = self.rankingLoss(pos_One, neg_One, torch,tensor([1]))
 
 
         if self.opt["number_user"] * self.opt["number_item"] > 10000000:
