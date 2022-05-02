@@ -177,7 +177,7 @@ class DGITrainer(Trainer):
             pre = torch.cat((pos_One, neg_One))
             reconstruct_loss = self.criterion(pre, Label)
         else:
-            reconstruct_loss = self.rankingLoss(pos_One, neg_One, torch,tensor([1]))
+            reconstruct_loss = self.rankingLoss(pos_One, neg_One, torch.tensor([1]))
 
 
         if self.opt["number_user"] * self.opt["number_item"] > 10000000:
