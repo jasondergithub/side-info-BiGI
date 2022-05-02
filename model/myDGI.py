@@ -30,7 +30,7 @@ class Transformer_discriminator(nn.Module):
         output = torch.squeeze(output, 0)
         output = self.lin(output)
         # score = self.sigm(output)
-        return score
+        return output
 
 
 class Discriminator(nn.Module):
