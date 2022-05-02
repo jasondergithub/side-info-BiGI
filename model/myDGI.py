@@ -53,7 +53,7 @@ class Discriminator(nn.Module):
         if s_bias is not None:
             score += s_bias
 
-        return self.sigm(score)
+        return score
 
 class myDGI(nn.Module):
     def __init__(self, opt):

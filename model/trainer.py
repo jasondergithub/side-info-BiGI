@@ -42,7 +42,7 @@ class DGITrainer(Trainer):
     def __init__(self, opt):
         self.opt = opt
         self.model = BiGI(opt)
-        self.criterion = nn.BCELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
         if opt['cuda']:
             self.model.cuda()
             self.criterion.cuda()
