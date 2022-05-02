@@ -45,7 +45,7 @@ class myDGI(nn.Module):
         self.read = AvgReadout()
         self.att = GAT(opt)
         self.sigm = nn.Sigmoid()
-        self.relu = nn.RELU()
+        self.relu = nn.ReLU()
         self.lin = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.lin_sub = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.disc = Discriminator(opt["hidden_dim"],opt["hidden_dim"])
