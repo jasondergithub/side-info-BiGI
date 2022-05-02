@@ -29,7 +29,7 @@ class Transformer_discriminator(nn.Module):
         output = self.Encoder(concat_vector)
         output = torch.squeeze(output, 0)
         output = self.lin(output)
-        score = self.sigm(output)
+        # score = self.sigm(output)
         return score
 
 
@@ -82,7 +82,7 @@ class myDGI(nn.Module):
         S_u_One = self.read(user_hidden_out, msk)  # hidden_dim
         S_i_One = self.read(item_hidden_out, msk)  # hidden_dim
         S_Two = self.lin(torch.cat((S_u_One, S_i_One)).unsqueeze(0)) # 1 * hidden_dim
-        S_Two = self.relu(S_Two)  # hidden_dim  need modify
+        S_Two = self.sigm(S_Two)  # hidden_dim  need modify
 
         real_user, real_item = self.att(user_hidden_out, item_hidden_out, UV_adj, VU_adj)
         fake_user, fake_item = self.att(fake_user_hidden_out, fake_item_hidden_out, CUV_adj, CVU_adj)
@@ -92,10 +92,10 @@ class myDGI(nn.Module):
         fake_user_index_feature_Two = torch.index_select(fake_user, 0, user_One)
         fake_item_index_feature_Two = torch.index_select(fake_item, 0, item_One)
         real_sub_Two = self.lin_sub(torch.cat((real_user_index_feature_Two, real_item_index_feature_Two),dim = 1))
-        real_sub_Two = self.relu(real_sub_Two)
+        real_sub_Two = self.sigm(real_sub_Two)
 
         fake_sub_Two = self.lin_sub(torch.cat((fake_user_index_feature_Two, fake_item_index_feature_Two),dim = 1))
-        fake_sub_Two = self.relu(fake_sub_Two)
+        fake_sub_Two = self.sigm(fake_sub_Two)
 
         # real_sub_prob = self.disc(S_Two, real_sub_Two)
         # fake_sub_prob = self.disc(S_Two, fake_sub_Two)
