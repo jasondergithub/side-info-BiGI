@@ -115,8 +115,8 @@ class DGITrainer(Trainer):
         item_index = torch.randperm(self.opt["number_item"], device=self.model.user_index.device)
         user_feature = self.model.user_embedding(user_index)
         item_feature = self.model.item_embedding(item_index)
-        user_feature = self.model.user_embed_fake(user_feature)
-        item_feature = self.model.item_embed_fake(item_feature)
+        # user_feature = self.model.user_embed_fake(user_feature)
+        # item_feature = self.model.item_embed_fake(item_feature)
         return user_feature, item_feature
 
     def update_bipartite(self, UV_adj, VU_adj, adj,fake = 0):
@@ -127,8 +127,8 @@ class DGITrainer(Trainer):
         else :
             user_feature = self.model.user_embedding(self.model.user_index)
             item_feature = self.model.item_embedding(self.model.item_index)
-            user_feature = self.model.user_embed_fake(user_feature)
-            item_feature = self.model.item_embed_fake(item_feature)
+            # user_feature = self.model.user_embed(user_feature)
+            # item_feature = self.model.item_embed(item_feature)
         self.user_hidden_out, self.item_hidden_out = self.model(user_feature, item_feature, UV_adj, VU_adj, adj)
         
     def HingeLoss(self, pos, neg):
