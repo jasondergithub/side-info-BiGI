@@ -16,6 +16,23 @@ class AvgReadout(nn.Module):
             return torch.sum(seq * msk, 0) / torch.sum(msk)
 
 
+class Transformer_discriminator(nn.Module):
+    def __init__(self, d_model):
+        super(Transformer_discriminator, self).__init__()
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=1)
+        self.Encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=2)
+        self.lin = nn.Linear(d_model, 1)
+        self.sigm = nn.Sigmoid()
+    
+    def forward(self, concat_vector): #concat_vector: [128, 64]
+        concat_vector = torch.unsqueeze(concat_vector, 0)
+        output = self.Encoder(concat_vector)
+        output = torch.squeeze(output, 0)
+        output = self.lin(output)
+        score = self.sigm(output)
+        return score
+
+
 class Discriminator(nn.Module):
     def __init__(self, n_in,n_out):
         super(Discriminator, self).__init__()
@@ -49,6 +66,7 @@ class myDGI(nn.Module):
         self.lin = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.lin_sub = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.disc = Discriminator(opt["hidden_dim"],opt["hidden_dim"])
+        self.trans = Transformer_discriminator(opt["hidden_dim"] * 2)
         for m in self.modules():
             self.weights_init(m)
 
@@ -79,8 +97,10 @@ class myDGI(nn.Module):
         fake_sub_Two = self.lin_sub(torch.cat((fake_user_index_feature_Two, fake_item_index_feature_Two),dim = 1))
         fake_sub_Two = self.relu(fake_sub_Two)
 
-        real_sub_prob = self.disc(S_Two, real_sub_Two)
-        fake_sub_prob = self.disc(S_Two, fake_sub_Two)
+        # real_sub_prob = self.disc(S_Two, real_sub_Two)
+        # fake_sub_prob = self.disc(S_Two, fake_sub_Two)
+        real_sub_prob = self.trans(torch.cat((S_Two, real_sub_Two), dim=1))
+        fake_sub_prob = self.disc(torch.cat((S_Two, fake_sub_Two), dim=1))
 
         prob = torch.cat((real_sub_prob, fake_sub_prob))
         label = torch.cat((torch.ones_like(real_sub_prob), torch.zeros_like(fake_sub_prob)))
