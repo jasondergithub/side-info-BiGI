@@ -99,8 +99,8 @@ class myDGI(nn.Module):
 
         # real_sub_prob = self.disc(S_Two, real_sub_Two)
         # fake_sub_prob = self.disc(S_Two, fake_sub_Two)
-        real_sub_prob = self.trans(torch.cat((S_Two, real_sub_Two), dim=1))
-        fake_sub_prob = self.disc(torch.cat((S_Two, fake_sub_Two), dim=1))
+        real_sub_prob = self.trans(torch.cat((S_Two.expand_as(real_sub_Two), real_sub_Two), dim=1))
+        fake_sub_prob = self.trans(torch.cat((S_Two.expand_as(fake_sub_Two), fake_sub_Two), dim=1))
 
         prob = torch.cat((real_sub_prob, fake_sub_prob))
         label = torch.cat((torch.ones_like(real_sub_prob), torch.zeros_like(fake_sub_prob)))
