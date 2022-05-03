@@ -80,7 +80,7 @@ class myDGI(nn.Module):
         self.lin_sub = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.disc = Discriminator(opt["hidden_dim"],opt["hidden_dim"])
         self.trans = Transformer_discriminator(opt["hidden_dim"])
-        self.linear_dis = (opt["hidden_dim"], 1)
+        self.linear_dis = nn.Linear(opt["hidden_dim"], 1)
         for m in self.modules():
             self.weights_init(m)
 
