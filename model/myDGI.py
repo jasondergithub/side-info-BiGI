@@ -74,8 +74,9 @@ class myDGI(nn.Module):
             if m.bias is not None:
                 m.bias.data.fill_(0.0)
     #
-    def forward(self, user_hidden_out, item_hidden_out, fake_user_hidden_out, fake_item_hidden_out, UV_adj, VU_adj, CUV_adj, CVU_adj, user_One, item_One, msk=None, samp_bias1=None,
-                samp_bias2=None):
+    def forward(self, user_hidden_out, item_hidden_out, fake_user_hidden_out, fake_item_hidden_out, UV_adj, VU_adj, CUV_adj, CVU_adj, user_One, item_One,
+        UV_rated, VU_rated, relation_UV_adj, relation_VU_adj,
+        msk=None, samp_bias1=None, samp_bias2=None):        
 
         S_u_One = self.read(user_hidden_out, msk)  # hidden_dim
         S_i_One = self.read(item_hidden_out, msk)  # hidden_dim

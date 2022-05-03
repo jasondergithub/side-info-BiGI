@@ -102,7 +102,8 @@ class GraphMaker(object):
         opt["number_user"] = len(self.user)
         opt["number_item"] = len(self.item)
         self.raw_data = data
-        self.UV,self.VU, self.adj, self.corruption_UV,self.corruption_VU, self.fake_adj = self.preprocess(data,opt)
+        self.UV,self.VU, self.adj, self.UV_rated, self.VU_rated, self.corruption_UV,\
+        self.corruption_VU, self.fake_adj, self.relation_UV_adj, self.relation_VU_adj = self.preprocess(data,opt)
 
     def preprocess(self,data,opt):
         UV_edges = []
@@ -112,6 +113,8 @@ class GraphMaker(object):
 
         user_real_dict = {}
         item_real_dict = {}
+
+        rated = []
         for edge in data:
             UV_edges.append([edge[0],edge[1]])
             if edge[0] not in user_real_dict.keys():
@@ -129,23 +132,55 @@ class GraphMaker(object):
                 real_adj[edge[0]] = {}
             real_adj[edge[0]][edge[1]] = 1
 
+            rated.append(edge[2]/5) #save the normalized rating from users to items
+
         UV_edges = np.array(UV_edges)
+        #print('UV_edge shape[0]: {}'.format(UV_edges.shape[0]))
         VU_edges = np.array(VU_edges)
+        #print('VU_edge shape[0]: {}'.format(VU_edges.shape[0]))
         all_edges = np.array(all_edges)
+        rated = np.array(rated)
         UV_adj = sp.coo_matrix((np.ones(UV_edges.shape[0]), (UV_edges[:, 0], UV_edges[:, 1])),
                                shape=(opt["number_user"], opt["number_item"]),
                                dtype=np.float32)
+        #print('UV_adj : {}'.format(UV_adj))
         VU_adj = sp.coo_matrix((np.ones(VU_edges.shape[0]), (VU_edges[:, 0], VU_edges[:, 1])),
                                shape=(opt["number_item"], opt["number_user"]),
                                dtype=np.float32)
         all_adj = sp.coo_matrix((np.ones(all_edges.shape[0]), (all_edges[:, 0], all_edges[:, 1])),shape=(opt["number_item"]+opt["number_user"], opt["number_item"]+opt["number_user"]),dtype=np.float32)
+        '''
+        製作weigthed matrix 裡面存user對於item的rating
+        將來再使用weighted GCN時可以使用
+        one side information let user collect information from items propotionally by rating
+        除此之外，在製作global feature實會需要用到某user對哪些items的評分，以及item被哪些users所評分
+        '''
+        UV_rate_adj = sp.coo_matrix((rated, (UV_edges[:, 0], UV_edges[:, 1])),
+                               shape=(opt["number_user"], opt["number_item"]),
+                               dtype=np.float32)
+        VU_rate_adj = sp.coo_matrix((rated, (VU_edges[:, 0], VU_edges[:, 1])),
+                            shape=(opt["number_item"], opt["number_user"]),
+                            dtype=np.float32)
+
+        # print('rated UV_adj: {}'.format(UV_rate_adj))
+        #print(VU_rate_adj.toarray()[0][:50])
+        # print('before normalied UV_adj: {}'.format(UV_adj))
         UV_adj = normalize(UV_adj)
+        # print('normalied UV_adj: {}'.format(UV_adj))
         VU_adj = normalize(VU_adj)
         all_adj = normalize(all_adj)
+        relational_UV_rate_adj = normalize(UV_rate_adj)
+        relational_VU_rate_adj = normalize(VU_rate_adj)
         UV_adj = sparse_mx_to_torch_sparse_tensor(UV_adj)
+        #print('sparse tensor form UV_adj: {}'.format(UV_adj))
         VU_adj = sparse_mx_to_torch_sparse_tensor(VU_adj)
         all_adj = sparse_mx_to_torch_sparse_tensor(all_adj)
-
+        UV_rate_adj = sparse_mx_to_torch_sparse_tensor(UV_rate_adj)
+        
+        VU_rate_adj = sparse_mx_to_torch_sparse_tensor(VU_rate_adj)
+        relational_UV_rate_adj = sparse_mx_to_torch_sparse_tensor(relational_UV_rate_adj)
+        relational_VU_rate_adj = sparse_mx_to_torch_sparse_tensor(relational_VU_rate_adj)
+        #print('real_adj: {}'.format(real_adj[0][3]))
+        #print('UV_rate_adj: {}'.format(UV_rate_adj))
         print("real graph loaded!")
         corruption_UV_adj, corruption_VU_adj, fake_adj, user_fake_dict,item_fake_dict = struct_corruption(opt,real_adj,opt["struct_rate"])
 
@@ -155,5 +190,5 @@ class GraphMaker(object):
         self.item_real_dict = item_real_dict
         self.item_fake_dict = item_fake_dict
         print("fake graph loaded!")
-        return UV_adj,VU_adj, all_adj, corruption_UV_adj, corruption_VU_adj,fake_adj
+        return UV_adj,VU_adj, all_adj, UV_rate_adj, VU_rate_adj, corruption_UV_adj, corruption_VU_adj,fake_adj, relational_UV_rate_adj, relational_VU_rate_adj
 

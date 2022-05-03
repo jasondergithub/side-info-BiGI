@@ -88,7 +88,11 @@ seed_everything(opt["seed"])
 # load data adj-matrix; Now sparse tensor ,But not setting in gpu
 G = GraphMaker(opt,"train.txt")
 UV = G.UV
+UV_rated = G.UV_rated
+relation_UV_adj = G.relation_UV_adj
 VU = G.VU
+VU_rated = G.VU_rated
+relation_VU_adj = G.relation_VU_adj
 adj = G.adj
 corruption_UV = G.corruption_UV
 corruption_VU = G.corruption_VU
@@ -124,6 +128,10 @@ item_feature = torch.tensor(item_feature, dtype=torch.float32)'''
 if opt["cuda"]:
     UV = UV.cuda()
     VU = VU.cuda()
+    UV_rated = UV_rated.cuda()
+    VU_rated = VU_rated.cuda()
+    relation_UV_adj = relation_UV_adj.cuda()
+    relation_VU_adj = relation_VU_adj.cuda()    
     adj = adj.cuda()
     fake_adj = fake_adj.cuda()
     corruption_UV = corruption_UV.cuda()
@@ -161,7 +169,7 @@ for epoch in range(1, opt['num_epoch'] + 1):
     start_time = time.time()
     for i, batch in enumerate(train_batch):
         global_step += 1
-        loss = trainer.reconstruct(UV, VU, adj, corruption_UV, corruption_VU, fake_adj, batch)  # [ [user_list], [item_list], [neg_item_list] ]
+        loss = trainer.reconstruct(UV, VU, UV_rated, VU_rated, relation_UV_adj, relation_VU_adj, adj, corruption_UV, corruption_VU, fake_adj, batch)  # [ [user_list], [item_list], [neg_item_list] ]
         train_loss += loss
     duration = time.time() - start_time
     print(format_str.format(datetime.now(), global_step, max_steps, epoch, \
