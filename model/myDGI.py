@@ -31,8 +31,8 @@ class Extract_Overall(nn.Module):
 class Transformer_discriminator(nn.Module):
     def __init__(self, d_model):
         super(Transformer_discriminator, self).__init__()
-        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=1)
-        self.Encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=2)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=2)
+        self.Encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=6, dropout=0.3)
         self.lin = nn.Linear(d_model, 1)
     
     def forward(self, concat_vector): #concat_vector: [128, 64]
@@ -77,8 +77,7 @@ class myDGI(nn.Module):
         self.lin1 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.lin2 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])          
         self.lin = nn.Linear(opt["hidden_dim"], opt["hidden_dim"])
-        self.lin_sub1 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
-        self.lin_sub2 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
+        self.lin_sub = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.disc = Discriminator(opt["hidden_dim"],opt["hidden_dim"])
         self.trans = Transformer_discriminator(opt["hidden_dim"])
         for m in self.modules():
@@ -112,18 +111,18 @@ class myDGI(nn.Module):
         real_item_index_feature_Two = torch.index_select(real_item, 0, item_One)
         fake_user_index_feature_Two = torch.index_select(fake_user, 0, user_One)
         fake_item_index_feature_Two = torch.index_select(fake_item, 0, item_One)
-        real_sub_Two = self.lin_sub1(torch.cat((real_user_index_feature_Two, real_item_index_feature_Two),dim = 1))
+        real_sub_Two = self.lin_sub(torch.cat((real_user_index_feature_Two, real_item_index_feature_Two),dim = 1))
         # real_sub_Two = self.relu(real_sub_Two)
 
-        fake_sub_Two = self.lin_sub2(torch.cat((fake_user_index_feature_Two, fake_item_index_feature_Two),dim = 1))
+        fake_sub_Two = self.lin_sub(torch.cat((fake_user_index_feature_Two, fake_item_index_feature_Two),dim = 1))
         # fake_sub_Two = self.relu(fake_sub_Two)
 
         # real_sub_prob = self.disc(S_Two, real_sub_Two)
         # fake_sub_prob = self.disc(S_Two, fake_sub_Two)
         mixup_real = torch.add(S_Two, real_sub_Two)
-        mixup_real = self.relu(mixup_real)
+        # mixup_real = self.relu(mixup_real)
         mixup_fake = torch.add(S_Two, fake_sub_Two)
-        mixup_fake = self.relu(mixup_fake)
+        # mixup_fake = self.relu(mixup_fake)
 
         real_sub_prob = self.trans(mixup_real)
         fake_sub_prob = self.trans(mixup_fake)
