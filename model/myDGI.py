@@ -31,8 +31,8 @@ class Extract_Overall(nn.Module):
 class Transformer_discriminator(nn.Module):
     def __init__(self, d_model):
         super(Transformer_discriminator, self).__init__()
-        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=2)
-        self.Encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=6, dropout=0.3)
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=2, dropout=0.3)
+        self.Encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=6)
         self.lin = nn.Linear(d_model, 1)
     
     def forward(self, concat_vector): #concat_vector: [128, 64]
