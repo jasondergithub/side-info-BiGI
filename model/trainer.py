@@ -129,7 +129,7 @@ class DGITrainer(Trainer):
             item_feature = self.model.item_embedding(self.model.item_index)
             # user_feature = self.model.user_embed(user_feature)
             # item_feature = self.model.item_embed(item_feature)
-        self.user_hidden_out, self.item_hidden_out = self.model(user_feature, item_feature, UV_adj, VU_adj, adj)
+        self.user_hidden_out, self.item_hidden_out = self.model(user_feature, item_feature, UV_adj, VU_adj, adj, fake)
         
     def HingeLoss(self, pos, neg):
         gamma = torch.tensor(self.opt["margin"])

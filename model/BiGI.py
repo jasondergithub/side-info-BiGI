@@ -80,8 +80,13 @@ class BiGI(nn.Module):
         out = torch.sigmoid(out)
         return out.view(-1)
 
-    def forward(self, ufea, vfea, UV_adj, VU_adj, adj):
-        # ufea = self.user_embed(ufea)
-        # vfea = self.item_embed(vfea)        
+    def forward(self, ufea, vfea, UV_adj, VU_adj, adj, fake):
+        if fake:
+            ufea = self.user_embed_fake(ufea)
+            vfea = self.item_embed_fake(vfea)
+        else:
+            ufea = self.user_embed(ufea)
+            vfea = self.item_embed(vfea)
+            
         learn_user,learn_item = self.GNN(ufea,vfea,UV_adj,VU_adj,adj)
         return learn_user,learn_item
