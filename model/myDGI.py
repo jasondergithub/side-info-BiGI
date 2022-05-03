@@ -102,7 +102,7 @@ class myDGI(nn.Module):
         h = self.lin2(torch.cat((Global_user_cor2_item, S_i_One)).unsqueeze(0))    
         S_Two = g + h     
         S_Two = torch.div(S_Two, 2)
-        S_Two = self.relu(S_Two)  # hidden_dim  need modify   
+        # S_Two = self.relu(S_Two)  # hidden_dim  need modify   
         S_Two = self.lin(S_Two) # 1 * hidden_dim
 
         real_user, real_item = self.att(user_hidden_out, item_hidden_out, UV_adj, VU_adj)
