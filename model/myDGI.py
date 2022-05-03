@@ -15,6 +15,18 @@ class AvgReadout(nn.Module):
             msk = torch.unsqueeze(msk, -1)
             return torch.sum(seq * msk, 0) / torch.sum(msk)
 
+class Extract_Overall(nn.Module):
+    def __init__(self, opt):
+        super(Extract_Overall, self).__init__()
+        self.opt = opt
+        self.relu = nn.ReLU()
+        self.weight_matrix = nn.Linear(opt["hidden_dim"], opt["hidden_dim"])
+    def forward(self, feature, adj):
+        h = self.weight_matrix(feature)
+        output = torch.mm(adj.to_dense(), h)
+        output =self.relu(output)
+        finalOutput = torch.mean(output, 0)
+        return finalOutput
 
 class Transformer_discriminator(nn.Module):
     def __init__(self, d_model):
@@ -58,9 +70,12 @@ class myDGI(nn.Module):
         super(myDGI, self).__init__()
         self.opt = opt
         self.read = AvgReadout()
+        self.extract = Extract_Overall(opt)
         self.att = GAT(opt)
         self.sigm = nn.Sigmoid()
         self.relu = nn.LeakyReLU()
+        self.lin1 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
+        self.lin2 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])          
         self.lin = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.lin_sub = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.disc = Discriminator(opt["hidden_dim"],opt["hidden_dim"])
@@ -80,8 +95,14 @@ class myDGI(nn.Module):
 
         S_u_One = self.read(user_hidden_out, msk)  # hidden_dim
         S_i_One = self.read(item_hidden_out, msk)  # hidden_dim
-        S_Two = self.lin(torch.cat((S_u_One, S_i_One)).unsqueeze(0)) # 1 * hidden_dim
-        S_Two = self.sigm(S_Two)  # hidden_dim  need modify
+        Global_item_cor2_user = self.extract(item_hidden_out, UV_rated)
+        Global_user_cor2_item = self.extract(user_hidden_out, VU_rated)   
+        g = self.lin1(torch.cat((S_u_One, Global_item_cor2_user)).unsqueeze(0))
+        h = self.lin2(torch.cat((Global_user_cor2_item, S_i_One)).unsqueeze(0))    
+        S_Two = g + h     
+        S_Two = torch.div(S_Two, 2)   
+        # S_Two = self.lin(torch.cat((S_u_One, S_i_One)).unsqueeze(0)) # 1 * hidden_dim
+        S_Two = self.relu(S_Two)  # hidden_dim  need modify
 
         real_user, real_item = self.att(user_hidden_out, item_hidden_out, UV_adj, VU_adj)
         fake_user, fake_item = self.att(fake_user_hidden_out, fake_item_hidden_out, CUV_adj, CVU_adj)
