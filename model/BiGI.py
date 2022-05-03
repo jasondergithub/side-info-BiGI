@@ -55,7 +55,7 @@ class BiGI(nn.Module):
         self.user_embedding = nn.Embedding(opt["number_user"], opt["feature_dim"])
         self.user_embedding.weight = user_embedding_parameter
         self.item_embedding = nn.Embedding(opt["number_item"], opt["feature_dim"])
-        self.item_embedding.weight = item_embedding_parameter
+        # self.item_embedding.weight = item_embedding_parameter
         self.user_embed = nn.Linear(opt['feature_dim'], opt["hidden_dim"])
         self.item_embed = nn.Linear(opt['feature_dim'], opt["hidden_dim"])   
         self.user_embed_fake = nn.Linear(opt['feature_dim'], opt["hidden_dim"])
