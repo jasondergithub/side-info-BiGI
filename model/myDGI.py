@@ -73,13 +73,14 @@ class myDGI(nn.Module):
         self.extract = Extract_Overall(opt)
         self.att = GAT(opt)
         self.sigm = nn.Sigmoid()
-        self.relu = nn.LeakyReLU()
+        self.relu = nn.LeakyReLU(0.1)
         self.lin1 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.lin2 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])          
-        self.lin = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
-        self.lin_sub = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
+        self.lin = nn.Linear(opt["hidden_dim"], opt["hidden_dim"])
+        self.lin_sub1 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
+        self.lin_sub2 = nn.Linear(opt["hidden_dim"] * 2, opt["hidden_dim"])
         self.disc = Discriminator(opt["hidden_dim"],opt["hidden_dim"])
-        self.trans = Transformer_discriminator(opt["hidden_dim"] * 2)
+        self.trans = Transformer_discriminator(opt["hidden_dim"])
         for m in self.modules():
             self.weights_init(m)
 
@@ -100,9 +101,9 @@ class myDGI(nn.Module):
         g = self.lin1(torch.cat((S_u_One, Global_item_cor2_user)).unsqueeze(0))
         h = self.lin2(torch.cat((Global_user_cor2_item, S_i_One)).unsqueeze(0))    
         S_Two = g + h     
-        S_Two = torch.div(S_Two, 2)   
-        # S_Two = self.lin(torch.cat((S_u_One, S_i_One)).unsqueeze(0)) # 1 * hidden_dim
-        S_Two = self.relu(S_Two)  # hidden_dim  need modify
+        S_Two = torch.div(S_Two, 2)
+        S_Two = self.relu(S_Two)  # hidden_dim  need modify   
+        S_Two = self.lin(S_Two) # 1 * hidden_dim
 
         real_user, real_item = self.att(user_hidden_out, item_hidden_out, UV_adj, VU_adj)
         fake_user, fake_item = self.att(fake_user_hidden_out, fake_item_hidden_out, CUV_adj, CVU_adj)
@@ -111,16 +112,21 @@ class myDGI(nn.Module):
         real_item_index_feature_Two = torch.index_select(real_item, 0, item_One)
         fake_user_index_feature_Two = torch.index_select(fake_user, 0, user_One)
         fake_item_index_feature_Two = torch.index_select(fake_item, 0, item_One)
-        real_sub_Two = self.lin_sub(torch.cat((real_user_index_feature_Two, real_item_index_feature_Two),dim = 1))
-        real_sub_Two = self.relu(real_sub_Two)
+        real_sub_Two = self.lin_sub1(torch.cat((real_user_index_feature_Two, real_item_index_feature_Two),dim = 1))
+        # real_sub_Two = self.relu(real_sub_Two)
 
-        fake_sub_Two = self.lin_sub(torch.cat((fake_user_index_feature_Two, fake_item_index_feature_Two),dim = 1))
-        fake_sub_Two = self.relu(fake_sub_Two)
+        fake_sub_Two = self.lin_sub2(torch.cat((fake_user_index_feature_Two, fake_item_index_feature_Two),dim = 1))
+        # fake_sub_Two = self.relu(fake_sub_Two)
 
         # real_sub_prob = self.disc(S_Two, real_sub_Two)
         # fake_sub_prob = self.disc(S_Two, fake_sub_Two)
-        real_sub_prob = self.trans(torch.cat((S_Two.expand_as(real_sub_Two), real_sub_Two), dim=1))
-        fake_sub_prob = self.trans(torch.cat((S_Two.expand_as(fake_sub_Two), fake_sub_Two), dim=1))
+        mixup_real = torch.add(S_Two, real_sub_Two)
+        mixup_real = self.relu(mixup_real)
+        mixup_fake = torch.add(S_Two, fake_sub_Two)
+        mixup_fake = self.relu(mixup_fake)
+
+        real_sub_prob = self.trans(mixup_real)
+        fake_sub_prob = self.trans(mixup_fake)
 
         prob = torch.cat((real_sub_prob, fake_sub_prob))
         label = torch.cat((torch.ones_like(real_sub_prob), torch.zeros_like(fake_sub_prob)))
