@@ -65,16 +65,20 @@ class DGCNLayer(nn.Module):
             dropout=opt["dropout"],
             alpha=opt["leakey"]
         )
-        self.user_union = nn.Linear(opt["hidden_dim"] + opt["hidden_dim"], opt["hidden_dim"])
-        self.item_union = nn.Linear(opt["hidden_dim"] + opt["hidden_dim"], opt["hidden_dim"])
+        # self.user_union = nn.Linear(opt["hidden_dim"] + opt["hidden_dim"], opt["hidden_dim"])
+        # self.item_union = nn.Linear(opt["hidden_dim"] + opt["hidden_dim"], opt["hidden_dim"])
+        self.user_union = nn.Linear(opt["hidden_dim"], opt["hidden_dim"])
+        self.item_union = nn.Linear(opt["hidden_dim"], opt["hidden_dim"])        
 
     def forward(self, ufea, vfea, UV_adj,VU_adj):
         User_ho = self.gc1(ufea, VU_adj)
         Item_ho = self.gc2(vfea, UV_adj)
         User_ho = self.gc3(User_ho, UV_adj)
         Item_ho = self.gc4(Item_ho, VU_adj)
-        User = torch.cat((User_ho, ufea), dim=1)
-        Item = torch.cat((Item_ho, vfea), dim=1)
+        # User = torch.cat((User_ho, ufea), dim=1)
+        # Item = torch.cat((Item_ho, vfea), dim=1)
+        User = User_ho + ufea
+        Item = Item_ho + vfea
         User = self.user_union(User)
         Item = self.item_union(Item)
         return F.relu(User), F.relu(Item)
