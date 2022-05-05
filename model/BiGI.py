@@ -70,14 +70,14 @@ class BiGI(nn.Module):
         out = self.GNN.score_function1(fea)
         out = F.relu(out)
         out = self.GNN.score_function2(out)
-        out = torch.sigmoid(out)
+        # out = torch.sigmoid(out)
         return out.view(out.size()[0], -1)
 
     def score(self, fea):
         out = self.GNN.score_function1(fea)
         out = F.relu(out)
         out = self.GNN.score_function2(out)
-        out = torch.sigmoid(out)
+        # out = torch.sigmoid(out)
         return out.view(-1)
 
     def forward(self, ufea, vfea, UV_adj, VU_adj, adj, fake):
